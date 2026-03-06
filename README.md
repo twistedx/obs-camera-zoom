@@ -12,12 +12,7 @@ A lightweight OBS Lua script that lets you zoom into any webcam or video source 
 
 ## How It Works
 
-The script applies two filters to your selected source:
-
-1. **Crop filter** — Cuts away edges of the frame based on your zoom level, pan position, and the shape of the scene item
-2. **Scale filter** — Scales the cropped result back up to fill the display size cleanly (bicubic sampling)
-
-A background timer monitors the scene item's dimensions. When you drag the handles to resize it, the crop adjusts automatically so the image always fills the frame without distortion.
+The script uses OBS's built-in scene item crop to zoom into the frame — no extra filters added to your source. It also sets the scene item to **SCALE_OUTER** bounds mode, which means when you resize the source to any shape, OBS automatically fills it by cropping overflow instead of stretching.
 
 ### Example
 
@@ -42,7 +37,7 @@ Your webcam outputs 1920x1080 (16:9). You drag the source into a square in your 
 2. Choose your webcam from the **Video Source** dropdown
 3. Adjust **Zoom Level** to zoom in (1.0 = no zoom)
 4. Use **Pan** sliders to move around the frame
-5. **Auto-Crop on Resize** is enabled by default
+5. Resize the source to any shape — it fills by cropping, never squishes
 
 ## Hotkeys
 
@@ -63,7 +58,6 @@ Go to **Settings > Hotkeys** and search for "Webcam Zoom":
 | Setting | Description |
 |---------|-------------|
 | Video Source | The webcam or video source to control |
-| Auto-Crop on Resize | Automatically crop to fill when the source is resized (default: on) |
 | Zoom Level | Manual zoom factor (1.0 = normal, 2.0 = 2x zoom, up to 10x) |
 | Pan Horizontal | Horizontal position of the zoom window (0.0 = left, 1.0 = right) |
 | Pan Vertical | Vertical position of the zoom window (0.0 = top, 1.0 = bottom) |
