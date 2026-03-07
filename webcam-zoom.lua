@@ -49,6 +49,9 @@ technique Draw
 };
 ]]
 
+-- Track all active filter instances for hotkey support
+local active_filters = {}
+
 -- ============================================================
 -- Filter source definition
 -- ============================================================
@@ -89,68 +92,8 @@ source_info.create = function(settings, source)
         }
     end
 
-    -- Register per-source hotkeys
-    data.hotkey_zoom_in = obs.obs_hotkey_register_source(source,
-        "webcam_zoom_in", "Webcam Zoom: Zoom In",
-        function(pressed)
-            if not pressed then return end
-            data.zoom_factor = math.min(data.zoom_factor + data.zoom_step, 10.0)
-            update_settings_from_data(data)
-        end)
-
-    data.hotkey_zoom_out = obs.obs_hotkey_register_source(source,
-        "webcam_zoom_out", "Webcam Zoom: Zoom Out",
-        function(pressed)
-            if not pressed then return end
-            data.zoom_factor = math.max(data.zoom_factor - data.zoom_step, 1.0)
-            if data.zoom_factor <= 1.0 then
-                data.pan_x = 0.5
-                data.pan_y = 0.5
-            end
-            update_settings_from_data(data)
-        end)
-
-    data.hotkey_reset = obs.obs_hotkey_register_source(source,
-        "webcam_zoom_reset", "Webcam Zoom: Reset",
-        function(pressed)
-            if not pressed then return end
-            data.zoom_factor = 1.0
-            data.pan_x = 0.5
-            data.pan_y = 0.5
-            update_settings_from_data(data)
-        end)
-
-    data.hotkey_pan_left = obs.obs_hotkey_register_source(source,
-        "webcam_zoom_pan_left", "Webcam Zoom: Pan Left",
-        function(pressed)
-            if not pressed then return end
-            data.pan_x = math.max(data.pan_x - data.pan_step, 0.0)
-            update_settings_from_data(data)
-        end)
-
-    data.hotkey_pan_right = obs.obs_hotkey_register_source(source,
-        "webcam_zoom_pan_right", "Webcam Zoom: Pan Right",
-        function(pressed)
-            if not pressed then return end
-            data.pan_x = math.min(data.pan_x + data.pan_step, 1.0)
-            update_settings_from_data(data)
-        end)
-
-    data.hotkey_pan_up = obs.obs_hotkey_register_source(source,
-        "webcam_zoom_pan_up", "Webcam Zoom: Pan Up",
-        function(pressed)
-            if not pressed then return end
-            data.pan_y = math.max(data.pan_y - data.pan_step, 0.0)
-            update_settings_from_data(data)
-        end)
-
-    data.hotkey_pan_down = obs.obs_hotkey_register_source(source,
-        "webcam_zoom_pan_down", "Webcam Zoom: Pan Down",
-        function(pressed)
-            if not pressed then return end
-            data.pan_y = math.min(data.pan_y + data.pan_step, 1.0)
-            update_settings_from_data(data)
-        end)
+    -- Track this filter instance
+    table.insert(active_filters, data)
 
     source_info.update(data, settings)
     return data
@@ -172,6 +115,14 @@ end
 -- Destroy filter instance
 -- ============================================================
 source_info.destroy = function(data)
+    -- Remove from active filters list
+    for i, f in ipairs(active_filters) do
+        if f == data then
+            table.remove(active_filters, i)
+            break
+        end
+    end
+
     if data.effect then
         obs.obs_enter_graphics()
         obs.gs_effect_destroy(data.effect)
@@ -286,8 +237,81 @@ function script_description()
 end
 
 -- ============================================================
--- Register the filter when script loads
+-- Hotkey helper: apply action to all active filter instances
+-- ============================================================
+function for_each_filter(fn)
+    for _, data in ipairs(active_filters) do
+        fn(data)
+        update_settings_from_data(data)
+    end
+end
+
+-- ============================================================
+-- Register the filter and hotkeys when script loads
 -- ============================================================
 function script_load(settings)
     obs.obs_register_source(source_info)
+
+    hotkey_ids = {}
+    local function reg(id, name, callback)
+        local hk = obs.obs_hotkey_register_frontend(id, name, callback)
+        local arr = obs.obs_data_get_array(settings, id)
+        obs.obs_hotkey_load(hk, arr)
+        obs.obs_data_array_release(arr)
+        hotkey_ids[id] = hk
+    end
+
+    reg("webcam_zoom_in", "Webcam Zoom: Zoom In", function(pressed)
+        if not pressed then return end
+        for_each_filter(function(d)
+            d.zoom_factor = math.min(d.zoom_factor + d.zoom_step, 10.0)
+        end)
+    end)
+
+    reg("webcam_zoom_out", "Webcam Zoom: Zoom Out", function(pressed)
+        if not pressed then return end
+        for_each_filter(function(d)
+            d.zoom_factor = math.max(d.zoom_factor - d.zoom_step, 1.0)
+            if d.zoom_factor <= 1.0 then d.pan_x = 0.5; d.pan_y = 0.5 end
+        end)
+    end)
+
+    reg("webcam_zoom_reset", "Webcam Zoom: Reset", function(pressed)
+        if not pressed then return end
+        for_each_filter(function(d)
+            d.zoom_factor = 1.0; d.pan_x = 0.5; d.pan_y = 0.5
+        end)
+    end)
+
+    reg("webcam_zoom_pan_left", "Webcam Zoom: Pan Left", function(pressed)
+        if not pressed then return end
+        for_each_filter(function(d) d.pan_x = math.max(d.pan_x - d.pan_step, 0.0) end)
+    end)
+
+    reg("webcam_zoom_pan_right", "Webcam Zoom: Pan Right", function(pressed)
+        if not pressed then return end
+        for_each_filter(function(d) d.pan_x = math.min(d.pan_x + d.pan_step, 1.0) end)
+    end)
+
+    reg("webcam_zoom_pan_up", "Webcam Zoom: Pan Up", function(pressed)
+        if not pressed then return end
+        for_each_filter(function(d) d.pan_y = math.max(d.pan_y - d.pan_step, 0.0) end)
+    end)
+
+    reg("webcam_zoom_pan_down", "Webcam Zoom: Pan Down", function(pressed)
+        if not pressed then return end
+        for_each_filter(function(d) d.pan_y = math.min(d.pan_y + d.pan_step, 1.0) end)
+    end)
+end
+
+-- ============================================================
+-- Save hotkeys
+-- ============================================================
+function script_save(settings)
+    if not hotkey_ids then return end
+    for id, hk in pairs(hotkey_ids) do
+        local arr = obs.obs_hotkey_save(hk)
+        obs.obs_data_set_array(settings, id, arr)
+        obs.obs_data_array_release(arr)
+    end
 end
