@@ -1,84 +1,71 @@
 =============================================
-  WEBCAM ZOOM - OBS Plugin
+  WEBCAM ZOOM - OBS Filter Plugin
   Installation & Usage Guide
 =============================================
 
 WHAT IT DOES
 ------------
-Lets you zoom into any webcam or video source in OBS without
-changing the output frame size. You can pan around the zoomed
-view using hotkeys or sliders.
-
-When you resize the source in your scene (drag the handles), the
-image automatically zooms/crops to fill the new shape instead of
-squishing. Drag it tall and thin? It crops the sides. Wide and
-short? It crops top and bottom. The image always looks correct.
+Adds a "Webcam Zoom" filter you can apply to any video source
+in OBS. Each source gets its own independent zoom and pan
+controls. Uses a GPU shader so it's fast and efficient.
 
 
 INSTALLATION
 ------------
 1. Open OBS Studio
-2. Go to: Tools → Scripts
+2. Go to: Tools > Scripts
 3. Click the "+" button (bottom left)
 4. Browse to this file: webcam-zoom.lua
-5. Click "Open" — the script is now loaded
+5. Click "Open" — the filter is now available
 
 
-SETUP
------
-1. In the Scripts window, click "webcam-zoom.lua" in the list
-2. On the right side, select your webcam from the "Video Source" dropdown
-3. Adjust the Zoom Level slider to zoom in (1.0 = no zoom)
-4. Use the Pan sliders to move around the zoomed view
+ADDING THE FILTER TO A SOURCE
+------------------------------
+1. Right-click any video source in your scene
+2. Select "Filters"
+3. Under "Effect Filters", click "+"
+4. Choose "Webcam Zoom"
+5. Adjust Zoom Level and Pan sliders
+
+You can add this filter to as many sources as you want.
+Each one has its own independent settings.
 
 
-HOTKEYS (Recommended)
----------------------
-Go to: Settings → Hotkeys and search for "Webcam Zoom"
+HOTKEYS
+-------
+Go to: Settings > Hotkeys
 
-You can assign keys for:
-  - Webcam Zoom: Zoom In       (e.g. Ctrl+Numpad+)
-  - Webcam Zoom: Zoom Out      (e.g. Ctrl+Numpad-)
-  - Webcam Zoom: Reset         (e.g. Ctrl+Numpad0)
-  - Webcam Zoom: Pan Left      (e.g. Ctrl+Numpad4)
-  - Webcam Zoom: Pan Right     (e.g. Ctrl+Numpad6)
-  - Webcam Zoom: Pan Up        (e.g. Ctrl+Numpad8)
-  - Webcam Zoom: Pan Down      (e.g. Ctrl+Numpad2)
+Each source with the filter gets its own hotkeys:
+  - Webcam Zoom: Zoom In
+  - Webcam Zoom: Zoom Out
+  - Webcam Zoom: Reset
+  - Webcam Zoom: Pan Left / Right / Up / Down
 
 
-SETTINGS
---------
-  Zoom Level      — How far to zoom in (1.0 = normal, 2.0 = 2x, etc.)
-  Pan Horizontal  — Move the zoom window left/right (0.0 = left, 1.0 = right)
-  Pan Vertical    — Move the zoom window up/down (0.0 = top, 1.0 = bottom)
-  Zoom Step       — How much each hotkey press zooms in/out
+FILTER SETTINGS
+---------------
+  Zoom Level      — How far to zoom in (1.0 = normal, up to 10x)
+  Pan Horizontal  — Left/right position (0.0 = left, 1.0 = right)
+  Pan Vertical    — Up/down position (0.0 = top, 1.0 = bottom)
+  Zoom Step       — How much each hotkey press zooms
   Pan Step        — How much each hotkey press pans
 
-AUTO-CROP ON RESIZE
-  Auto-Crop on Resize — ON by default. When you drag the source handles
-                        in OBS to resize it, the script detects the new
-                        shape and automatically crops the webcam feed to
-                        fill it completely. No squishing, no black bars.
-                        The image just zooms in to fit.
 
-  Example: Your webcam is 1920x1080 (16:9). You drag it into a
-  square shape. Instead of squishing, the script crops the left
-  and right edges so you see the center of the frame filling
-  the square perfectly. Use the Pan sliders to shift what part
-  of the frame is visible.
+RESIZE WITHOUT SQUISHING
+-------------------------
+To prevent squishing when you resize a source to a different
+aspect ratio:
+
+1. Right-click the source
+2. Transform > Edit Transform
+3. Set "Bounding Box Type" to "Scale to outer bounds"
+
+This fills the frame by cropping instead of stretching.
 
 
 UNINSTALL
 ---------
-1. Go to: Tools → Scripts
-2. Select "webcam-zoom.lua"
-3. Click the "-" button to remove it
-   (This also removes the zoom filters from your source)
-
-
-TROUBLESHOOTING
----------------
-- Source not showing? Make sure you selected the correct source in the dropdown.
-- Zoom not working? The source must have a valid resolution (active webcam).
-- Filters leftover? If the script was removed improperly, manually delete
-  filters named "WebcamZoom_Crop" and "WebcamZoom_Scale" from the source.
+1. Remove the "Webcam Zoom" filter from any sources using it
+2. Go to: Tools > Scripts
+3. Select "webcam-zoom.lua"
+4. Click the "-" button to remove it
