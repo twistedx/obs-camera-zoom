@@ -78,8 +78,7 @@ source_info.create = function(settings, source)
 
     -- Compile the shader
     obs.obs_enter_graphics()
-    local err = ""
-    data.effect = obs.gs_effect_create(EFFECT_CODE, nil, err)
+    data.effect = obs.gs_effect_create(EFFECT_CODE, nil, nil)
     obs.obs_leave_graphics()
 
     if data.effect then
